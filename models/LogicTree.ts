@@ -1,20 +1,32 @@
-
-interface Node {
-  id: string;
+export class Node{
   label: string;
   children: Node[];
-  addChild(node: Node): void;
-  removeChild(node: Node): void;
-}
 
-class LogicTree {
-  private root: Node | null;
-
-  constructor() {
-    this.root = null;
+  constructor(label: string) {
+    this.label = label;
+    this.children = [];
   }
 
-  getRoot(): Node | null {
+  addChild(node: Node): void {
+    this.children.push(node);
+  }
+
+  removeChild(node: Node): void {
+    const index = this.children.indexOf(node);
+    if (index > -1) {
+      this.children.splice(index, 1);
+    }
+  }
+}
+
+export class LogicTree {
+  private root: Node;
+
+  constructor(root: Node) {
+    this.root = root;
+  }
+
+  getRoot(): Node{
     return this.root;
   }
 

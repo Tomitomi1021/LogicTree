@@ -6,7 +6,7 @@
 
 <script>
 import TreeNode from '~/components/TreeNode.vue';
-import { LogicTree } from '~/models/LogicTree'; // モデル部分のインポート
+import { LogicTree, Node } from '~/models/LogicTree'; // モデル部分のインポート
 
 export default {
   name: 'LogicTree',
@@ -15,7 +15,25 @@ export default {
   },
   data() {
     return {
-      tree: new LogicTree(), // モデル部分のインスタンス化
+      tree: (()=>{
+        // モデル部分のインスタンス化
+        let root = new Node('Root');
+        let child1= new Node('Child1');
+        let child11= new Node('Child11');
+        let child12= new Node('Child12');
+        let child2= new Node('Child2');
+        let child21= new Node('Child21');
+        let child22= new Node('Child22');
+        
+        let tree = new LogicTree(root);
+        tree.addNode(root,child1);
+        tree.addNode(child1,child11);
+        tree.addNode(child1,child12);
+        tree.addNode(root,child2);
+        tree.addNode(child2,child21);
+        tree.addNode(child2,child22);
+        return tree;
+      })()
     };
   },
 };
