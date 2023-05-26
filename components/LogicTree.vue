@@ -1,6 +1,6 @@
 <template>
   <div class="logic-tree">
-    <TreeNode :node="tree.getRoot()" />
+    <TreeNode ref="rootNode" :node="tree.getRoot()" />
   </div>
 </template>
 
@@ -35,6 +35,9 @@ export default {
         return tree;
       })()
     };
+  },
+  mounted(){
+    this.$refs.rootNode.activate();
   },
 };
 </script>
