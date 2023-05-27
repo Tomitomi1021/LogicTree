@@ -1,10 +1,18 @@
 <template>
   <div class="tree-node">
     <div 
+      v-if="!editMode"
       class="node-label"
       tabindex='0'
-      @keydown="handleKeyDown"
+      @keydown="handleKeyDownAtNormalMode"
       ref="nodeLabel">{{ node.label }}</div>
+    <input 
+      ref="nodeLabelEditor" 
+      v-if="editMode"
+      v-model="node.label"
+      @keydown="handleKeyDownAtEditMode"
+      @blur="onEditorBlur"
+      type="text">
     <div class="children">
       <TreeNode 
         v-for="(childNode,index) in node.children" 
@@ -28,11 +36,12 @@ export default {
   },
   data(){
     return {
-      isActive:false
+      isActive:false,
+      editMode:false
     }
   },
   methods: {
-    handleKeyDown(event) {
+    handleKeyDownAtNormalMode(event) {
       if (event.key === 'h') {
         this.activateParentNode();
       } else if (event.key === 'l') {
@@ -41,10 +50,32 @@ export default {
         this.activatePreviousSiblingNode();
       } else if (event.key === 'j') {
         this.activateNextSiblingNode();
+      } else if (event.key === 'i') {
+        this.activateEditMode();
+      }
+    },
+    onEditorBlur(){
+      this.editMode=false;
+    },
+    handleKeyDownAtEditMode(event){
+      if (event.key === 'Escape' || event.key === 'Enter'){
+        this.deactivateEditMode();
       }
     },
     activate(){
       this.$refs.nodeLabel.focus();
+    },
+    activateEditMode(){
+      this.editMode=true;
+      this.$nextTick(()=>{
+        this.$refs.nodeLabelEditor.focus();
+      });
+    },
+    deactivateEditMode(){
+      this.editMode=false;
+      this.$nextTick(()=>{
+        this.$refs.nodeLabel.focus();
+      });
     },
     activateChildNode(index){
       if(index<0||this.$refs.childrenComponent.length<=index)return;
