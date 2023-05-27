@@ -1,26 +1,29 @@
 <template>
   <div class="tree-node">
-    <div 
-      v-if="!editMode"
-      class="node-label"
-      tabindex='0'
+    <pre
+      ref="nodeLabel"
+      v-show="!editMode"
       @keydown="handleKeyDownAtNormalMode"
-      ref="nodeLabel">{{ node.label }}</div>
+      class="node-label"
+      tabindex='0'>{{ node.label }}</pre>
     <input 
       ref="nodeLabelEditor" 
-      v-if="editMode"
+      v-show="editMode"
       v-model="node.label"
       @keydown="handleKeyDownAtEditMode"
+      @input="adjustContentWidth"
       @blur="onEditorBlur"
+      class="node-label"
+      :style="{width:contentWidth+'px'}"
       type="text">
     <div class="children">
       <TreeNode 
+        ref="childrenComponent"
         v-for="(childNode,index) in node.children" 
         :node="childNode" 
         @activePrevSibling="()=>activateChildNode(index-1)"
         @activeNextSibling="()=>activateChildNode(index+1)"
-        @deleteMe="()=>deleteChildNode(index)"
-        ref="childrenComponent"/>
+        @deleteMe="()=>deleteChildNode(index)"/>
     </div>
   </div>
 </template>
@@ -38,7 +41,8 @@ export default {
   data(){
     return {
       isActive:false,
-      editMode:false
+      editMode:false,
+      contentWidth:0
     }
   },
   methods: {
@@ -62,6 +66,13 @@ export default {
       } else if (event.key === 'D'){
         this.deleteThisNodeForce();
       }
+    },
+    adjustContentWidth(){
+      const editor = this.$refs.nodeLabelEditor;
+      this.contentWidth= 0;
+      this.$nextTick(()=>{
+        this.contentWidth = editor.scrollWidth - 9 ;
+      });
     },
     deleteThisNodeForce(){
       this.$emit("deleteMe");
@@ -114,6 +125,7 @@ export default {
       this.$nextTick(()=>{
         this.$refs.nodeLabelEditor.focus();
       });
+      this.adjustContentWidth();
     },
     deactivateEditMode(){
       this.editMode=false;
@@ -158,14 +170,20 @@ export default {
 
 .node-label {
   font-weight: bold;
+  margin:0;
+  padding-top:0;
+  padding-bottom:0;
+  border: solid black 1px;
+  border-radius: 5px;
+  padding-left:5px;
+  padding-right:5px;
+  height:1.5em;
+  width:fit-content;
+  font-size:16pt;
+  font-family: "Noto Sans", sans-serif;
 }
 
 .node-label:focus{
-  font-weight: bold;
-  background-color: yellow;
-}
-
-.node-label-active{
   font-weight: bold;
   background-color: yellow;
 }
