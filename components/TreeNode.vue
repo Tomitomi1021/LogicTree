@@ -59,10 +59,17 @@ export default {
         this.addChildNode();
       } else if (event.key === 'd'){
         this.deleteThisNode();
+      } else if (event.key === 'D'){
+        this.deleteThisNodeForce();
       }
     },
+    deleteThisNodeForce(){
+      this.$emit("deleteMe");
+    },
     deleteThisNode(){
+      if(this.node.children.length==0){
         this.$emit("deleteMe");
+      }
     },
     deleteChildNode(index){
       let target = this.$refs.childrenComponent[index].node;
