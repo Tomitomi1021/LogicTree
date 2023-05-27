@@ -23,6 +23,8 @@
         :node="childNode" 
         @activePrevSibling="()=>activateChildNode(index-1)"
         @activeNextSibling="()=>activateChildNode(index+1)"
+        @addPrevSibling="()=>addChildNode(index)"
+        @addNextSibling="()=>addChildNode(index+1)"
         @deleteMe="()=>deleteChildNode(index)"/>
     </div>
   </div>
@@ -58,8 +60,10 @@ export default {
       } else if (event.key === 'i') {
         this.activateEditMode();
       } else if (event.key === 'o') {
-        this.addSiblingNode();
+        this.addNextSiblingNode();
       } else if (event.key === 'O') {
+        this.addPrevSiblingNode();
+      } else if (event.key === '>') {
         this.addChildNode();
       } else if (event.key === 'd'){
         this.deleteThisNode();
@@ -95,15 +99,14 @@ export default {
         }
       });
     },
-    addSiblingNode(){
-      const parentNode = this.$parent;
-      if (parentNode && parentNode.activate) {
-        parentNode.addChildNode();
-      }
+    addPrevSiblingNode(){
+      this.$emit("addPrevSibling");
     },
-    addChildNode(){
-      this.node.newChild("new node");
-      let newNodeIndex = this.node.children.length-1
+    addNextSiblingNode(){
+      this.$emit("addNextSibling");
+    },
+    addChildNode(newNodeIndex = this.node.children.length){
+      this.node.newChild(newNodeIndex,"new node");
 
       this.$nextTick(()=>{
         this.$refs.childrenComponent[newNodeIndex].activate();
