@@ -15,20 +15,15 @@
       </div>
     </div>
 
-    <pre
-      ref="nodeLabel"
-      v-show="!editMode"
-      @keydown="handleKeyDownAtNormalMode"
-      class="node-label"
-      tabindex='0'>{{ node.label }}</pre>
     <input 
-      ref="nodeLabelEditor" 
-      v-show="editMode"
+      ref="nodeLabel" 
       v-model="node.label"
-      @keydown="handleKeyDownAtEditMode"
+      @keydown="handleKeyDown"
       @input="adjustContentWidth"
       @blur="onEditorBlur"
+      tabindex="0"
       class="node-label"
+      :readonly="!editMode"
       :style="{width:contentWidth+'px'}"
       type="text">
 
@@ -66,6 +61,9 @@ export default {
       contentWidth:0
     }
   },
+  mounted(){
+    this.adjustContentWidth();
+  },
   computed:{
     midIndex(){
       return Math.floor(this.node.children.length/2);
@@ -75,27 +73,33 @@ export default {
     }
   },
   methods: {
-    handleKeyDownAtNormalMode(event) {
-      if (event.key === 'h') {
-        this.activateParentNode();
-      } else if (event.key === 'l') {
-        this.activateFirstChildNode();
-      } else if (event.key === 'k') {
-        this.activatePreviousSiblingNode();
-      } else if (event.key === 'j') {
-        this.activateNextSiblingNode();
-      } else if (event.key === 'i') {
-        this.activateEditMode();
-      } else if (event.key === 'o') {
-        this.addNextSiblingNode();
-      } else if (event.key === 'O') {
-        this.addPrevSiblingNode();
-      } else if (event.key === '>') {
-        this.addChildNode();
-      } else if (event.key === 'd'){
-        this.deleteThisNode();
-      } else if (event.key === 'D'){
-        this.deleteThisNodeForce();
+    handleKeyDown(event) {
+      if(this.editMode){
+        if (event.key === 'Escape' || event.key === 'Enter'){
+          this.deactivateEditMode();
+        }
+      }else{
+        if (event.key === 'h') {
+          this.activateParentNode();
+        } else if (event.key === 'l') {
+          this.activateFirstChildNode();
+        } else if (event.key === 'k') {
+          this.activatePreviousSiblingNode();
+        } else if (event.key === 'j') {
+          this.activateNextSiblingNode();
+        } else if (event.key === 'i') {
+          this.activateEditMode();
+        } else if (event.key === 'o') {
+          this.addNextSiblingNode();
+        } else if (event.key === 'O') {
+          this.addPrevSiblingNode();
+        } else if (event.key === '>') {
+          this.addChildNode();
+        } else if (event.key === 'd'){
+          this.deleteThisNode();
+        } else if (event.key === 'D'){
+          this.deleteThisNodeForce();
+        }
       }
     },
     childrenComponent(index){
@@ -106,10 +110,10 @@ export default {
       }
     },
     adjustContentWidth(){
-      const editor = this.$refs.nodeLabelEditor;
+      const editor = this.$refs.nodeLabel;
       this.contentWidth= 0;
       this.$nextTick(()=>{
-        this.contentWidth = editor.scrollWidth - 9 ;
+        this.contentWidth = editor.scrollWidth-5;
       });
     },
     deleteThisNodeForce(){
@@ -149,18 +153,13 @@ export default {
     onEditorBlur(){
       this.editMode=false;
     },
-    handleKeyDownAtEditMode(event){
-      if (event.key === 'Escape' || event.key === 'Enter'){
-        this.deactivateEditMode();
-      }
-    },
     activate(){
       this.$refs.nodeLabel.focus();
     },
     activateEditMode(){
       this.editMode=true;
       this.$nextTick(()=>{
-        this.$refs.nodeLabelEditor.focus();
+        this.$refs.nodeLabel.focus();
       });
       this.adjustContentWidth();
     },
