@@ -7,9 +7,9 @@ export class Node{
     this.children = [];
   }
 
-  newChild(label: string){
+  newChild(index:Number, label: string){
     let childNode = new Node(label);
-    this.addChild(childNode);
+    this.children.splice(index,0,childNode);
   }
 
   addChild(node: Node): void {
