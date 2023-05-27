@@ -19,6 +19,7 @@
         :node="childNode" 
         @activePrevSibling="()=>activateChildNode(index-1)"
         @activeNextSibling="()=>activateChildNode(index+1)"
+        @deleteMe="()=>deleteChildNode(index)"
         ref="childrenComponent"/>
     </div>
   </div>
@@ -56,7 +57,25 @@ export default {
         this.addSiblingNode();
       } else if (event.key === 'O') {
         this.addChildNode();
+      } else if (event.key === 'd'){
+        this.deleteThisNode();
       }
+    },
+    deleteThisNode(){
+        this.$emit("deleteMe");
+    },
+    deleteChildNode(index){
+      let target = this.$refs.childrenComponent[index].node;
+      this.node.removeChild(target);
+      this.$nextTick(()=>{
+        if(this.node.children.length == 0){
+          this.activate();
+        }else if(index == this.node.children.length){
+          this.$refs.childrenComponent[index-1].activate();
+        }else{
+          this.$refs.childrenComponent[index].activate();
+        }
+      });
     },
     addSiblingNode(){
       const parentNode = this.$parent;
