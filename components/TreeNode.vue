@@ -1,7 +1,8 @@
 <template>
   <div class="tree-node">
     <div class="flex">
-      <div class="padding"></div>
+      <div :style="{width:contentWidth+'px'}" ></div>
+      <div class="line"></div>
       <div class="children">
         <TreeNode 
           ref="childrenComponentFirstHalf"
@@ -28,7 +29,8 @@
       type="text">
 
     <div class="flex">
-      <div class="padding"></div>
+      <div :style="{width:contentWidth+'px'}" ></div>
+      <div class="line"></div>
       <div class="children">
         <TreeNode 
           ref="childrenComponentSecondHalf"
@@ -58,7 +60,7 @@ export default {
     return {
       isActive:false,
       editMode:false,
-      contentWidth:0
+      contentWidth:0,
     }
   },
   mounted(){
@@ -155,6 +157,7 @@ export default {
     },
     activate(){
       this.$refs.nodeLabel.focus();
+      this.adjustContentWidth();
     },
     activateEditMode(){
       this.editMode=true;
@@ -230,8 +233,8 @@ export default {
   display:flex;
 }
 
-.padding{
-  width:90px;
+.line{
+  width:2em;
 }
 </style>
 
