@@ -1,5 +1,20 @@
 <template>
   <div class="tree-node">
+    <div class="flex">
+      <div class="padding"></div>
+      <div class="children">
+        <TreeNode 
+          ref="childrenComponentFirstHalf"
+          v-for="(childNode,index) in node.children.slice(0,midIndex)" 
+          :node="childNode" 
+          @activePrevSibling="()=>activateChildNode(index-1)"
+          @activeNextSibling="()=>activateChildNode(index+1)"
+          @addPrevSibling="()=>addChildNode(index)"
+          @addNextSibling="()=>addChildNode(index+1)"
+          @deleteMe="()=>deleteChildNode(index)"/>
+      </div>
+    </div>
+
     <pre
       ref="nodeLabel"
       v-show="!editMode"
@@ -16,16 +31,20 @@
       class="node-label"
       :style="{width:contentWidth+'px'}"
       type="text">
-    <div class="children">
-      <TreeNode 
-        ref="childrenComponent"
-        v-for="(childNode,index) in node.children" 
-        :node="childNode" 
-        @activePrevSibling="()=>activateChildNode(index-1)"
-        @activeNextSibling="()=>activateChildNode(index+1)"
-        @addPrevSibling="()=>addChildNode(index)"
-        @addNextSibling="()=>addChildNode(index+1)"
-        @deleteMe="()=>deleteChildNode(index)"/>
+
+    <div class="flex">
+      <div class="padding"></div>
+      <div class="children">
+        <TreeNode 
+          ref="childrenComponentSecondHalf"
+          v-for="(childNode,index) in node.children.slice(midIndex,nodeCount)" 
+          :node="childNode" 
+          @activePrevSibling="()=>activateChildNode(index+midIndex-1)"
+          @activeNextSibling="()=>activateChildNode(index+midIndex+1)"
+          @addPrevSibling="()=>addChildNode(index+midIndex)"
+          @addNextSibling="()=>addChildNode(index+midIndex+1)"
+          @deleteMe="()=>deleteChildNode(index+midIndex)"/>
+      </div>
     </div>
   </div>
 </template>
@@ -45,6 +64,14 @@ export default {
       isActive:false,
       editMode:false,
       contentWidth:0
+    }
+  },
+  computed:{
+    midIndex(){
+      return Math.floor(this.node.children.length/2);
+    },
+    nodeCount(){
+      return this.node.children.length;
     }
   },
   methods: {
@@ -71,6 +98,13 @@ export default {
         this.deleteThisNodeForce();
       }
     },
+    childrenComponent(index){
+      if(index < this.midIndex){
+        return this.$refs.childrenComponentFirstHalf[index];
+      }else{
+        return this.$refs.childrenComponentSecondHalf[index-this.midIndex];
+      }
+    },
     adjustContentWidth(){
       const editor = this.$refs.nodeLabelEditor;
       this.contentWidth= 0;
@@ -87,15 +121,15 @@ export default {
       }
     },
     deleteChildNode(index){
-      let target = this.$refs.childrenComponent[index].node;
+      let target = this.childrenComponent(index).node;
       this.node.removeChild(target);
       this.$nextTick(()=>{
         if(this.node.children.length == 0){
           this.activate();
         }else if(index == this.node.children.length){
-          this.$refs.childrenComponent[index-1].activate();
+          this.childrenComponent(index-1).activate();
         }else{
-          this.$refs.childrenComponent[index].activate();
+          this.childrenComponent(index).activate();
         }
       });
     },
@@ -109,7 +143,7 @@ export default {
       this.node.newChild(newNodeIndex,"new node");
 
       this.$nextTick(()=>{
-        this.$refs.childrenComponent[newNodeIndex].activate();
+        this.childrenComponent(newNodeIndex).activate();
       })
     },
     onEditorBlur(){
@@ -137,9 +171,9 @@ export default {
       });
     },
     activateChildNode(index){
-      if(index<0||this.$refs.childrenComponent.length<=index)return;
+      if(index<0||this.node.children.length<=index)return;
 
-      const firstChildNode = this.$refs.childrenComponent[index];
+      const firstChildNode = this.childrenComponent(index);
       if (firstChildNode && firstChildNode.activate) {
         firstChildNode.activate();
       }
@@ -151,7 +185,7 @@ export default {
       }
     },
     activateFirstChildNode() {
-      const firstChildNode = this.$refs.childrenComponent[0];
+      const firstChildNode = this.childrenComponent(0);
       if (firstChildNode && firstChildNode.activate) {
         firstChildNode.activate();
       }
@@ -168,7 +202,6 @@ export default {
 
 <style scoped>
 .tree-node {
-  margin-left: 20px;
 }
 
 .node-label {
@@ -192,7 +225,14 @@ export default {
 }
 
 .children {
-  margin-top: 10px;
+}
+
+.flex{
+  display:flex;
+}
+
+.padding{
+  width:90px;
 }
 </style>
 
