@@ -1,16 +1,25 @@
 <template>
   <div class="tree-node">
     <div 
+      v-if="!editMode"
       class="node-label"
       tabindex='0'
-      @keydown="handleKeyDown"
+      @keydown="handleKeyDownAtNormalMode"
       ref="nodeLabel">{{ node.label }}</div>
+    <input 
+      ref="nodeLabelEditor" 
+      v-if="editMode"
+      v-model="node.label"
+      @keydown="handleKeyDownAtEditMode"
+      @blur="onEditorBlur"
+      type="text">
     <div class="children">
       <TreeNode 
         v-for="(childNode,index) in node.children" 
         :node="childNode" 
         @activePrevSibling="()=>activateChildNode(index-1)"
         @activeNextSibling="()=>activateChildNode(index+1)"
+        @deleteMe="()=>deleteChildNode(index)"
         ref="childrenComponent"/>
     </div>
   </div>
@@ -28,11 +37,12 @@ export default {
   },
   data(){
     return {
-      isActive:false
+      isActive:false,
+      editMode:false
     }
   },
   methods: {
-    handleKeyDown(event) {
+    handleKeyDownAtNormalMode(event) {
       if (event.key === 'h') {
         this.activateParentNode();
       } else if (event.key === 'l') {
@@ -41,10 +51,68 @@ export default {
         this.activatePreviousSiblingNode();
       } else if (event.key === 'j') {
         this.activateNextSiblingNode();
+      } else if (event.key === 'i') {
+        this.activateEditMode();
+      } else if (event.key === 'o') {
+        this.addSiblingNode();
+      } else if (event.key === 'O') {
+        this.addChildNode();
+      } else if (event.key === 'd'){
+        this.deleteThisNode();
+      }
+    },
+    deleteThisNode(){
+        this.$emit("deleteMe");
+    },
+    deleteChildNode(index){
+      let target = this.$refs.childrenComponent[index].node;
+      this.node.removeChild(target);
+      this.$nextTick(()=>{
+        if(this.node.children.length == 0){
+          this.activate();
+        }else if(index == this.node.children.length){
+          this.$refs.childrenComponent[index-1].activate();
+        }else{
+          this.$refs.childrenComponent[index].activate();
+        }
+      });
+    },
+    addSiblingNode(){
+      const parentNode = this.$parent;
+      if (parentNode && parentNode.activate) {
+        parentNode.addChildNode();
+      }
+    },
+    addChildNode(){
+      this.node.newChild("new node");
+      let newNodeIndex = this.node.children.length-1
+
+      this.$nextTick(()=>{
+        this.$refs.childrenComponent[newNodeIndex].activate();
+      })
+    },
+    onEditorBlur(){
+      this.editMode=false;
+    },
+    handleKeyDownAtEditMode(event){
+      if (event.key === 'Escape' || event.key === 'Enter'){
+        this.deactivateEditMode();
       }
     },
     activate(){
       this.$refs.nodeLabel.focus();
+    },
+    activateEditMode(){
+      this.editMode=true;
+      this.$nextTick(()=>{
+        this.$refs.nodeLabelEditor.focus();
+      });
+    },
+    deactivateEditMode(){
+      this.editMode=false;
+      this.$nextTick(()=>{
+        this.$refs.nodeLabel.focus();
+      });
     },
     activateChildNode(index){
       if(index<0||this.$refs.childrenComponent.length<=index)return;
