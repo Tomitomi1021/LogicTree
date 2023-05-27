@@ -7,6 +7,11 @@ export class Node{
     this.children = [];
   }
 
+  newChild(label: string){
+    let childNode = new Node(label);
+    this.addChild(childNode);
+  }
+
   addChild(node: Node): void {
     this.children.push(node);
   }

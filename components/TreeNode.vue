@@ -52,7 +52,25 @@ export default {
         this.activateNextSiblingNode();
       } else if (event.key === 'i') {
         this.activateEditMode();
+      } else if (event.key === 'o') {
+        this.addSiblingNode();
+      } else if (event.key === 'O') {
+        this.addChildNode();
       }
+    },
+    addSiblingNode(){
+      const parentNode = this.$parent;
+      if (parentNode && parentNode.activate) {
+        parentNode.addChildNode();
+      }
+    },
+    addChildNode(){
+      this.node.newChild("new node");
+      let newNodeIndex = this.node.children.length-1
+
+      this.$nextTick(()=>{
+        this.$refs.childrenComponent[newNodeIndex].activate();
+      })
     },
     onEditorBlur(){
       this.editMode=false;
