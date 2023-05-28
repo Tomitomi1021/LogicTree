@@ -1,5 +1,6 @@
 <template>
   <div class="tree-node">
+    <div class="padding"></div>
     <div class="flex">
       <div :style="{width:contentWidth+'px'}" ></div>
       <div class="line"></div>
@@ -43,6 +44,7 @@
           @deleteMe="()=>deleteChildNode(index+midIndex)"/>
       </div>
     </div>
+    <div class="padding"></div>
   </div>
 </template>
 
@@ -229,12 +231,16 @@ export default {
 .children {
 }
 
+.padding{
+  height:5px;
+}
+
 .flex{
   display:flex;
 }
 
 .line{
-  width:2em;
+  width:3em;
 }
 </style>
 
