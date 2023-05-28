@@ -70,7 +70,33 @@ export default {
   },
   computed:{
     midIndex(){
-      return Math.floor(this.node.children.length/2);
+      if(this.node.children.length==0){
+        return 0;
+      }
+
+      const nodeCounts = this.node.children.map(child => {
+        function count(n){
+          if(n.children.length==0){
+            return 1;
+          }else{
+            return n.children
+                  .map((c)=>count(c))
+                  .reduce((a,x)=>a+x);
+          }
+        }
+        return count(child);
+      });
+
+      const nodeCountSum = nodeCounts.reduce((a,x)=>a+x);
+
+      let nodeCountCumulativeSum = 0;
+      for(let i=0;i<nodeCounts.length;i++){
+        nodeCountCumulativeSum += nodeCounts[i];
+        if(nodeCountCumulativeSum > nodeCountSum-nodeCountCumulativeSum){
+          return i;
+        }
+      }
+      return this.node.children.length;
     },
     nodeCount(){
       return this.node.children.length;
