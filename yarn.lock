@@ -2449,6 +2449,11 @@ lazystream@^1.0.0:
   dependencies:
     readable-stream "^2.0.5"
 
+leader-line-vue@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/leader-line-vue/-/leader-line-vue-2.1.1.tgz#738ff22bd80a62a694840fd7358f936ceb3ad898"
+  integrity sha512-ZfNoDcwgfHESNLErfPBdJ4I/1tbXLBUFwGfbqAZvTcOghcm7UtUm7mUPZVAOThlO3q75n8pZmDTGtM/Gwfx+xA==
+
 lilconfig@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/lilconfig/-/lilconfig-2.1.0.tgz#78e23ac89ebb7e1bfbf25b18043de756548e7f52"

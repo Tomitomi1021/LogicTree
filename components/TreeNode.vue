@@ -67,6 +67,12 @@ export default {
   },
   mounted(){
     this.adjustContentWidth();
+
+    const nuxtApp = useNuxtApp();
+    for(let i = 0; i < this.node.children.length; i++){
+      nuxtApp.$setLine(
+        this.$refs.nodeLabel,this.childrenComponent(i).$el);
+    }
   },
   computed:{
     midIndex(){
