@@ -17,6 +17,7 @@
       </div>
     </div>
 
+    <LeaderLine ref="leaderLine" :start="startPoint" :end="endPoint"/> 
     <input 
       ref="nodeLabel" 
       v-model="node.label"
@@ -63,16 +64,19 @@ export default {
       isActive:false,
       editMode:false,
       contentWidth:0,
+      startPoint: undefined,
+      endPoint: undefined
     }
   },
   mounted(){
     this.adjustContentWidth();
 
-    const nuxtApp = useNuxtApp();
-    for(let i = 0; i < this.node.children.length; i++){
-      nuxtApp.$setLine(
-        this.$refs.nodeLabel,this.childrenComponent(i).$el);
-    }
+    this.$nextTick(()=>{
+      if(this.$parent.$refs.nodeLabel!==undefined){
+        this.startPoint = this.$parent.$refs.nodeLabel;
+        this.endPoint   = this.$refs.nodeLabel;
+      }
+    });
   },
   computed:{
     midIndex(){
