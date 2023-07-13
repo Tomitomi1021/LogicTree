@@ -278,13 +278,8 @@ export default {
     }
 
   },
-  mounted(){
-    setInterval(()=>{
-      this.checkRect();
-    },100);
-  },
   methods:{
-    checkRect(){
+    update(){
       if(this.start !== undefined){
         const rect = this.start.getBoundingClientRect();
         this.startRect = {

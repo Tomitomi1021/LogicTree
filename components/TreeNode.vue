@@ -68,6 +68,9 @@ export default {
       endPoint: undefined
     }
   },
+  updated(){
+    this.$refs.leaderLine.update();
+  },
   mounted(){
     this.adjustContentWidth();
 
