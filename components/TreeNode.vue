@@ -1,32 +1,51 @@
 <template>
   <div class="tree-node">
-    <pre
-      ref="nodeLabel"
-      v-show="!editMode"
-      @keydown="handleKeyDownAtNormalMode"
-      class="node-label"
-      tabindex='0'>{{ node.label }}</pre>
+    <div class="padding"></div>
+    <div class="flex">
+      <div :style="{width:contentWidth+'px'}" ></div>
+      <div class="line"></div>
+      <div class="children">
+        <TreeNode 
+          ref="childrenComponentFirstHalf"
+          v-for="(childNode,index) in node.children.slice(0,midIndex)" 
+          :node="childNode" 
+          @activePrevSibling="()=>activateChildNode(index-1)"
+          @activeNextSibling="()=>activateChildNode(index+1)"
+          @addPrevSibling="()=>addChildNode(index)"
+          @addNextSibling="()=>addChildNode(index+1)"
+          @deleteMe="()=>deleteChildNode(index)"/>
+      </div>
+    </div>
+
+    <LeaderLine ref="leaderLine" :start="startPoint" :end="endPoint"/> 
     <input 
-      ref="nodeLabelEditor" 
-      v-show="editMode"
+      ref="nodeLabel" 
       v-model="node.label"
-      @keydown="handleKeyDownAtEditMode"
+      @keydown="handleKeyDown"
       @input="adjustContentWidth"
       @blur="onEditorBlur"
+      tabindex="0"
       class="node-label"
+      :readonly="!editMode"
       :style="{width:contentWidth+'px'}"
       type="text">
-    <div class="children">
-      <TreeNode 
-        ref="childrenComponent"
-        v-for="(childNode,index) in node.children" 
-        :node="childNode" 
-        @activePrevSibling="()=>activateChildNode(index-1)"
-        @activeNextSibling="()=>activateChildNode(index+1)"
-        @addPrevSibling="()=>addChildNode(index)"
-        @addNextSibling="()=>addChildNode(index+1)"
-        @deleteMe="()=>deleteChildNode(index)"/>
+
+    <div class="flex">
+      <div :style="{width:contentWidth+'px'}" ></div>
+      <div class="line"></div>
+      <div class="children">
+        <TreeNode 
+          ref="childrenComponentSecondHalf"
+          v-for="(childNode,index) in node.children.slice(midIndex,nodeCount)" 
+          :node="childNode" 
+          @activePrevSibling="()=>activateChildNode(index+midIndex-1)"
+          @activeNextSibling="()=>activateChildNode(index+midIndex+1)"
+          @addPrevSibling="()=>addChildNode(index+midIndex)"
+          @addNextSibling="()=>addChildNode(index+midIndex+1)"
+          @deleteMe="()=>deleteChildNode(index+midIndex)"/>
+      </div>
     </div>
+    <div class="padding"></div>
   </div>
 </template>
 
@@ -44,38 +63,100 @@ export default {
     return {
       isActive:false,
       editMode:false,
-      contentWidth:0
+      contentWidth:0,
+      startPoint: undefined,
+      endPoint: undefined
+    }
+  },
+  updated(){
+    this.$refs.leaderLine.update();
+  },
+  mounted(){
+    this.adjustContentWidth();
+
+    this.$nextTick(()=>{
+      if(this.$parent.$refs.nodeLabel!==undefined){
+        this.startPoint = this.$parent.$refs.nodeLabel;
+        this.endPoint   = this.$refs.nodeLabel;
+      }
+    });
+  },
+  computed:{
+    midIndex(){
+      if(this.node.children.length==0){
+        return 0;
+      }
+
+      const nodeCounts = this.node.children.map(child => {
+        function count(n){
+          if(n.children.length==0){
+            return 1;
+          }else{
+            return n.children
+                  .map((c)=>count(c))
+                  .reduce((a,x)=>a+x);
+          }
+        }
+        return count(child);
+      });
+
+      const nodeCountSum = nodeCounts.reduce((a,x)=>a+x);
+
+      let nodeCountCumulativeSum = 0;
+      for(let i=0;i<nodeCounts.length;i++){
+        nodeCountCumulativeSum += nodeCounts[i];
+        if(nodeCountCumulativeSum > nodeCountSum-nodeCountCumulativeSum){
+          return i;
+        }
+      }
+      return this.node.children.length;
+    },
+    nodeCount(){
+      return this.node.children.length;
     }
   },
   methods: {
-    handleKeyDownAtNormalMode(event) {
-      if (event.key === 'h') {
-        this.activateParentNode();
-      } else if (event.key === 'l') {
-        this.activateFirstChildNode();
-      } else if (event.key === 'k') {
-        this.activatePreviousSiblingNode();
-      } else if (event.key === 'j') {
-        this.activateNextSiblingNode();
-      } else if (event.key === 'i') {
-        this.activateEditMode();
-      } else if (event.key === 'o') {
-        this.addNextSiblingNode();
-      } else if (event.key === 'O') {
-        this.addPrevSiblingNode();
-      } else if (event.key === '>') {
-        this.addChildNode();
-      } else if (event.key === 'd'){
-        this.deleteThisNode();
-      } else if (event.key === 'D'){
-        this.deleteThisNodeForce();
+    handleKeyDown(event) {
+      if(this.editMode){
+        if (event.key === 'Escape' || event.key === 'Enter'){
+          this.deactivateEditMode();
+        }
+      }else{
+        if (event.key === 'h') {
+          this.activateParentNode();
+        } else if (event.key === 'l') {
+          this.activateFirstChildNode();
+        } else if (event.key === 'k') {
+          this.activatePreviousSiblingNode();
+        } else if (event.key === 'j') {
+          this.activateNextSiblingNode();
+        } else if (event.key === 'i') {
+          this.activateEditMode();
+        } else if (event.key === 'o') {
+          this.addNextSiblingNode();
+        } else if (event.key === 'O') {
+          this.addPrevSiblingNode();
+        } else if (event.key === '>') {
+          this.addChildNode();
+        } else if (event.key === 'd'){
+          this.deleteThisNode();
+        } else if (event.key === 'D'){
+          this.deleteThisNodeForce();
+        }
+      }
+    },
+    childrenComponent(index){
+      if(index < this.midIndex){
+        return this.$refs.childrenComponentFirstHalf[index];
+      }else{
+        return this.$refs.childrenComponentSecondHalf[index-this.midIndex];
       }
     },
     adjustContentWidth(){
-      const editor = this.$refs.nodeLabelEditor;
+      const editor = this.$refs.nodeLabel;
       this.contentWidth= 0;
       this.$nextTick(()=>{
-        this.contentWidth = editor.scrollWidth - 9 ;
+        this.contentWidth = editor.scrollWidth-5;
       });
     },
     deleteThisNodeForce(){
@@ -87,15 +168,15 @@ export default {
       }
     },
     deleteChildNode(index){
-      let target = this.$refs.childrenComponent[index].node;
+      let target = this.childrenComponent(index).node;
       this.node.removeChild(target);
       this.$nextTick(()=>{
         if(this.node.children.length == 0){
           this.activate();
         }else if(index == this.node.children.length){
-          this.$refs.childrenComponent[index-1].activate();
+          this.childrenComponent(index-1).activate();
         }else{
-          this.$refs.childrenComponent[index].activate();
+          this.childrenComponent(index).activate();
         }
       });
     },
@@ -109,24 +190,20 @@ export default {
       this.node.newChild(newNodeIndex,"new node");
 
       this.$nextTick(()=>{
-        this.$refs.childrenComponent[newNodeIndex].activate();
+        this.childrenComponent(newNodeIndex).activate();
       })
     },
     onEditorBlur(){
       this.editMode=false;
     },
-    handleKeyDownAtEditMode(event){
-      if (event.key === 'Escape' || event.key === 'Enter'){
-        this.deactivateEditMode();
-      }
-    },
     activate(){
       this.$refs.nodeLabel.focus();
+      this.adjustContentWidth();
     },
     activateEditMode(){
       this.editMode=true;
       this.$nextTick(()=>{
-        this.$refs.nodeLabelEditor.focus();
+        this.$refs.nodeLabel.focus();
       });
       this.adjustContentWidth();
     },
@@ -137,9 +214,9 @@ export default {
       });
     },
     activateChildNode(index){
-      if(index<0||this.$refs.childrenComponent.length<=index)return;
+      if(index<0||this.node.children.length<=index)return;
 
-      const firstChildNode = this.$refs.childrenComponent[index];
+      const firstChildNode = this.childrenComponent(index);
       if (firstChildNode && firstChildNode.activate) {
         firstChildNode.activate();
       }
@@ -151,7 +228,7 @@ export default {
       }
     },
     activateFirstChildNode() {
-      const firstChildNode = this.$refs.childrenComponent[0];
+      const firstChildNode = this.childrenComponent(0);
       if (firstChildNode && firstChildNode.activate) {
         firstChildNode.activate();
       }
@@ -168,7 +245,6 @@ export default {
 
 <style scoped>
 .tree-node {
-  margin-left: 20px;
 }
 
 .node-label {
@@ -192,7 +268,18 @@ export default {
 }
 
 .children {
-  margin-top: 10px;
+}
+
+.padding{
+  height:5px;
+}
+
+.flex{
+  display:flex;
+}
+
+.line{
+  width:3em;
 }
 </style>
 
