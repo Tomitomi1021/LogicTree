@@ -22,7 +22,6 @@
       ref="nodeLabel" 
       v-model="node.label"
       @keydown="handleKeyDown"
-      @input="adjustContentWidth"
       @blur="onEditorBlur"
       tabindex="0"
       class="node-label"
@@ -63,7 +62,6 @@ export default {
     return {
       isActive:false,
       editMode:false,
-      contentWidth:0,
       startPoint: undefined,
       endPoint: undefined
     }
@@ -72,8 +70,6 @@ export default {
     this.$refs.leaderLine.update();
   },
   mounted(){
-    this.adjustContentWidth();
-
     this.$nextTick(()=>{
       if(this.$parent.$refs.nodeLabel!==undefined){
         this.startPoint = this.$parent.$refs.nodeLabel;
@@ -82,6 +78,15 @@ export default {
     });
   },
   computed:{
+    contentWidth(){
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext('2d');
+      
+      context.font = "bold 16pt 'Noto Sans','sans-serif'"
+      const width = context.measureText(this.node.label).width;
+
+      return width;
+    },
     midIndex(){
       if(this.node.children.length==0){
         return 0;
@@ -152,13 +157,6 @@ export default {
         return this.$refs.childrenComponentSecondHalf[index-this.midIndex];
       }
     },
-    adjustContentWidth(){
-      const editor = this.$refs.nodeLabel;
-      this.contentWidth= 0;
-      this.$nextTick(()=>{
-        this.contentWidth = editor.scrollWidth-5;
-      });
-    },
     deleteThisNodeForce(){
       this.$emit("deleteMe");
     },
@@ -198,14 +196,12 @@ export default {
     },
     activate(){
       this.$refs.nodeLabel.focus();
-      this.adjustContentWidth();
     },
     activateEditMode(){
       this.editMode=true;
       this.$nextTick(()=>{
         this.$refs.nodeLabel.focus();
       });
-      this.adjustContentWidth();
     },
     deactivateEditMode(){
       this.editMode=false;
@@ -248,16 +244,16 @@ export default {
 }
 
 .node-label {
-  font-weight: bold;
   margin:0;
   padding-top:0;
   padding-bottom:0;
   border: solid black 1px;
   border-radius: 5px;
   padding-left:5px;
-  padding-right:5px;
+  padding-right:10px;
   height:1.5em;
   width:fit-content;
+  font-weight: bold;
   font-size:16pt;
   font-family: "Noto Sans", sans-serif;
 }
