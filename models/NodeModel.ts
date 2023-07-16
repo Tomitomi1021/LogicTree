@@ -2,9 +2,9 @@
 import { Node, ID } from "./Node.ts";
 
 interface IInstanceAccessor{
-  new(node: Node): id | undefined;
+  new(node: Node): id;
   set(id:ID,node: Node);
-  get(id:ID): Node | undefined;
+  get(id:ID): Node;
   del(id:ID);
 };
 
@@ -21,21 +21,18 @@ class NodeModelBase{
 
   isRoot(nodeId:ID): bool{
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
 
     return node.parent === null;
   }
   
   getLabel(nodeId:ID): string{
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
 
     return node.label;
   }
 
   setLabel(nodeId:ID, newLabel:string){
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
 
     node.label = newLabel;
     this._acc.set(nodeId,node);
@@ -43,21 +40,18 @@ class NodeModelBase{
 
   getChildren(nodeId:ID): ID[]{
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
 
     return node.children;
   }
 
   getParent(nodeId:ID): ID | null{
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
 
     return node.parent;
   }
 
   addChild(nodeId:ID, label: string, index: number | undefined): ID{
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
 
     let params: Node;
     params.label = label;
@@ -65,7 +59,6 @@ class NodeModelBase{
     params.children = [];
 
     const newNodeId = this._acc.new(params);
-    if(newNodeId === undefined)throw Error(`Failed to create a node`);
 
     if(index === undefined){
       node.children.push(newNodeId);
@@ -80,11 +73,9 @@ class NodeModelBase{
 
   delNode(nodeId:ID){
     const node = this._acc.get(nodeId);
-    if(node === undefined)throw Error(`No such node (ID=${nodeId})`);
     if(node.parent === null)throw Error(`Root cannot be deleted.`);
 
     const parentNode = this._acc.get(node.parent);
-    if(parentNode === undefined)throw Error(`No such node (ID=${parentNode})`);
 
     parentNode.children 
       = parentNode.children.filter((id)=>{
