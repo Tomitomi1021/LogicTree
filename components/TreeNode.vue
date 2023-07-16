@@ -17,6 +17,7 @@
       ref="nodeLabel" 
       v-model="node.label"
       @keydown="handleKeyDown"
+      @click="activate()"
       @blur="onEditorBlur"
       tabindex="0"
       :class="(isOnCursor)?'node-label-oncursor':'node-label'"
@@ -73,6 +74,11 @@ export default {
     });
     if(this.isOnCursor){
       this.$refs.nodeLabel.focus();
+    }
+  },
+  watch:{
+    nodeId(newValue,oldValue){
+      this.node = NuxtAdapterProvider.get().instanceStorage.getInstance(this.nodeId);
     }
   },
   computed:{
@@ -161,6 +167,9 @@ export default {
         this.$refs.nodeLabel.focus();
       }
     },
+    activate(){
+      this.model.setCursor(this.nodeId);
+    }
   }
 };
 </script>
