@@ -7,4 +7,5 @@ export type Node = {
 
   parent:   ID|null;
   children: ID[];
-}
+};
+

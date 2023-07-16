@@ -1,108 +1,86 @@
-import { ID } from "./Node.ts";
-import { NodeModel, IInstanceAccessor } from "./NodeModel.ts";
+import { ID } from '~/models/Node.ts';
+import { NodeModel, IInstanceAccessor } from '~/models/NodeModel.ts';
+
+export interface IUserInterface{
+  setCursor(cursor:ID);
+  getCursor():ID;
+};
 
 /**
  * @brief UIにおいて，ユーザーが行う操作を定義する．
  */
-class UIController extends NodeModel{
-  private _cursor:       ID;      //今，どのノードが注目されているかを示す
+export class UIController extends NodeModel{
   private _defaultLabel: string;  //ノードを追加する際のデフォルトのラベル名
-  private _editMode:     bool;    //編集モードか否か
+  private _ui: IUserInterface;    
 
-  constructor(accessor: IInstanceAccessor,rootNode: ID,defaultLabel: string){
+  constructor(
+    accessor: IInstanceAccessor,
+    ui: IUserInterface,
+    defaultLabel: string){
     super(accessor);
 
-    this._cursor       = rootNode;
     this._defaultLabel = defaultLabel;
-    this._editMode     = false;
-  }
-
-  getNodeInfo(nodeId:ID){
-    const label = this.getLabel(nodeId);
-    const isOnCursor = (this._cursor===nodeId);
-    const isEditMode = (isOnCursor===true)?this._editMode:false;
-    return {
-      label:      label,
-      isOnCursor: isOnCursor,
-      isEditMode: isEditMode
-    };
-  }
-
-  activateEditMode(){
-    this._editMode = true;
-  }
-
-  cursorMoveTo(to: ID){
-    this._cursor = to;
-    this._editMode = false;
-  }
-
-  editLabel(newLabel: string){
-    if(this._editMode === true){
-      this.setLabel(this._cursor,newLabel);
-    }else{
-      throw Error("editLabel called at non-editMode");
-    }
+    this._ui = ui;
   }
 
   cursorMoveToParent(){
-    const parentNode = this.getParent(this._cursor);
+    const parentNode = this.getParent(this._ui.getCursor());
     if(parentNode !== null){
-      this.cursorMoveTo(parentNode);
+      this._ui.setCursor(parentNode);
     }
   }
 
   cursorMoveToChild(){
-    const children = this.getChildren(this._cursor);
+    const children = this.getChildren(this._ui.getCursor());
     if(children.length > 0){
-      this.cursorMoveTo(children[0]);
+      this._ui.setCursor(children[0]);
     }
   }
 
   cursorMoveToPrevSibling(){
-    const prevSibling = this.getPrevSibling(this._cursor);
+    const prevSibling = this.getPrevSibling(this._ui.getCursor());
     if(prevSibling!==null){
-      this.cursorMoveTo(prevSibling);
+      this._ui.setCursor(prevSibling);
     }
   }
 
   cursorMoveToNextSibling(){
-    const nextSibling = this.getNextSibling(this._cursor);
+    const nextSibling = this.getNextSibling(this._ui.getCursor());
     if(nextSibling!==null){
-      this.cursorMoveTo(nextSibling);
+      this._ui.setCursor(nextSibling);
     }
   }
 
   addChildNode(){
-    const newNode = this.addChild(this._cursor,this._defaultLabel);
-    this.cursorMoveTo(newNode);
+    const newNode = this.addChild(this._ui.getCursor(),this._defaultLabel);
+    this._ui.setCursor(newNode);
   }
 
   addNextSiblingNode(){
-    const newNode = this.addNextSibling(this._cursor,this._defaultLabel);
-    this.cursorMoveTo(newNode);
+    const newNode = this.addNextSibling(this._ui.getCursor(),this._defaultLabel);
+    this._ui.setCursor(newNode);
   }
 
   addPrevSiblingNode(){
-    const newNode = this.addPrevSibling(this._cursor,this._defaultLabel);
-    this.cursorMoveTo(newNode);
+    const newNode = this.addPrevSibling(this._ui.getCursor(),this._defaultLabel);
+    this._ui.setCursor(newNode);
   }
 
   deleteThisNode(){
-    const children = this.getChildren(this._cursor).length;
-    if(children.length===0){
-      const parentNode = this.getParent(this._cursor);
-      const nextSibling = this.getNextSibling(this._cursor);
-      const prevSibling = this.getPrevSibling(this._cursor);
+    const children_length = this.getChildren(this._ui.getCursor()).length;
+    if(children_length===0){
+      const parentNode = this.getParent(this._ui.getCursor());
+      const nextSibling = this.getNextSibling(this._ui.getCursor());
+      const prevSibling = this.getPrevSibling(this._ui.getCursor());
 
-      this.delNode(this._cursor);
+      this.delNode(this._ui.getCursor());
 
       if(nextSibling !== null){
-        this.cursorMoveTo(nextSibling);
+        this._ui.setCursor(nextSibling);
       }else if(prevSibling !== null){
-        this.cursorMoveTo(prevSibling);
+        this._ui.setCursor(prevSibling);
       }else if(parentNode !== null){
-        this.cursorMoveTo(parentNode);
+        this._ui.setCursor(parentNode);
       }else{
         throw Error("削除後の移動先がありません．");
       }
@@ -110,23 +88,22 @@ class UIController extends NodeModel{
   }
 
   deleteThisNodeForce(){
-    const children = this._model.getChildren(this._cursor).length;
-    if(children.length===0){
-      const parentNode = this._model.getParent(this._cursor);
-      const nextSibling = this._model.getNextSibling(this._cursor);
-      const prevSibling = this._model.getPrevSibling(this._cursor);
+    const children = this.getChildren(this._ui.getCursor()).length;
 
-      this._model.delNodeAll(this._cursor);
+    const parentNode = this.getParent(this._ui.getCursor());
+    const nextSibling = this.getNextSibling(this._ui.getCursor());
+    const prevSibling = this.getPrevSibling(this._ui.getCursor());
 
-      if(nextSibling !== null){
-        this.cursorMoveTo(nextSibling);
-      }else if(prevSibling !== null){
-        this.cursorMoveTo(prevSibling);
-      }else if(parentNode !== null){
-        this.cursorMoveTo(parentNode);
-      }else{
-        throw Error("削除後の移動先がありません．");
-      }
+    this.delNodeAll(this._ui.getCursor());
+
+    if(nextSibling !== null){
+      this._ui.setCursor(nextSibling);
+    }else if(prevSibling !== null){
+      this._ui.setCursor(prevSibling);
+    }else if(parentNode !== null){
+      this._ui.setCursor(parentNode);
+    }else{
+      throw Error("削除後の移動先がありません．");
     }
   }
 };

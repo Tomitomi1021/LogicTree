@@ -1,9 +1,15 @@
 
-import { Node, ID } from "./Node.ts";
+import { Node, ID } from '~/models/Node.ts';
 
-interface IInstanceAccessor{
-  new(node: Node): id;
-  set(id:ID,node: Node);
+//Nodeのインスタンスに何かしらの値を代入する時に使用する．
+export type NodeParams = Partial<Omit<Node,id>>;
+
+//Nodeのインスタンスを直接操作する時に用いる．
+export type NodeAccess = ReadOnly<Pick<Node,id>>|Omit<Node,id>;
+
+export interface IInstanceAccessor{
+  new(params: NodeParams): id;
+  set(id:ID,params: NodeParams);
   get(id:ID): Node;
   del(id:ID);
 };
@@ -53,19 +59,21 @@ class NodeModelBase{
   addChild(nodeId:ID, label: string, index: number | undefined): ID{
     const node = this._acc.get(nodeId);
 
-    let params: Node;
-    params.label = label;
-    params.parent = nodeId;
-    params.children = [];
+    const params = {
+      label: label,
+      parent: nodeId
+    };
 
     const newNodeId = this._acc.new(params);
 
     if(index === undefined){
       node.children.push(newNodeId);
       this._acc.set(nodeId,node);
-    }else if(0 <= index && index <= parentNode.children.length){
+      return newNodeId;
+    }else if(0 <= index && index <= node.children.length){
       node.children.splice(index,0,newNodeId);
       this._acc.set(nodeId,node);
+      return newNodeId;
     }else{
       throw Error(`Index is invalid (index=${index})`);
     }
@@ -92,7 +100,7 @@ class NodeModelBase{
  * @brief NodeModelBaseを使用した操作を定義する．
  * IInstanceAccessorを直接使わない操作はこちらで定義する．
  */
-class NodeModel extends NodeModelBase{
+export class NodeModel extends NodeModelBase{
   constructor(accessor: IInstanceAccessor){
     super(accessor);
   }
@@ -151,7 +159,7 @@ class NodeModel extends NodeModelBase{
       this.delNode(nodeId);
     }else{
       children.forEach((child)=>{
-        delNodeAll(child);
+        this.delNodeAll(child);
       });
       this.delNode(nodeId);
     }

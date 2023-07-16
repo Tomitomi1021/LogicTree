@@ -1,29 +1,35 @@
-import { Node,ID } from "./Node.ts"
-import { IInstanceAccessor } from "./NodeModel.ts";
-import { v4 as uuidv4 } from "uuid";
+import { Node,ID } from '~/models/Node.ts'
+import { IInstanceAccessor,NodeParams } from '~/models/NodeModel.ts';
+import { v4 as uuidv4 } from 'uuid';
 
-class InstanceStorage implements IInstanceAccessor{
+export class InstanceStorage implements IInstanceAccessor{
   private _storage : { [id: ID]: Node } = {};
 
-  new(node: Node): ID{
+  new(params: NodeParams): ID{
     const id = uuidv4();
-    const node = {...node};
 
     if(id in this._storage){
       throw Error("UUID is conflicted. You are lucky guy!!!");
     }else{
-      this._storage[id] = node;
+      const newNode : Node = {
+        id: id,
+        label: "",
+        parent: null,
+        children: []
+      };
+
+      Object.assign(newNode,params);
+      this._storage[id] = newNode;
+
       return id;
     }
   }
 
-  set(id:ID,node: Node){
-    const node = {...node};
-
+  set(id:ID,params: NodeParams){
     if(id in this._storage){
-      this._storage[id] = node;
+      Object.assign(this._storage[id],params);
     }else{
-      throw Error(`No such node (ID=${nodeId})`);
+      throw Error(`No such node (ID=${id})`);
     }
   }
 
@@ -33,7 +39,7 @@ class InstanceStorage implements IInstanceAccessor{
       const node = {...nodeFromStorage};
       return node;
     }else{
-      throw Error(`No such node (ID=${nodeId})`);
+      throw Error(`No such node (ID=${id})`);
     }
   }
 
@@ -41,7 +47,15 @@ class InstanceStorage implements IInstanceAccessor{
     if(id in this._storage){
       delete this._storage[id];
     }else{
-      throw Error(`No such node (ID=${nodeId})`);
+      throw Error(`No such node (ID=${id})`);
+    }
+  }
+
+  getInstance(id:ID): NodeAccess{
+    if(id in this._storage){
+      return this._storage[id];
+    }else{
+      throw Error(`No such node (ID=${id})`);
     }
   }
 };
