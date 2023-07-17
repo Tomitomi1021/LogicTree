@@ -8,12 +8,7 @@
         <TreeNode 
           ref="childrenComponentFirstHalf"
           v-for="(childNode,index) in node.children.slice(0,midIndex)" 
-          :node="childNode" 
-          @activePrevSibling="()=>activateChildNode(index-1)"
-          @activeNextSibling="()=>activateChildNode(index+1)"
-          @addPrevSibling="()=>addChildNode(index)"
-          @addNextSibling="()=>addChildNode(index+1)"
-          @deleteMe="()=>deleteChildNode(index)"/>
+          :nodeId="childNode" />
       </div>
     </div>
 
@@ -22,10 +17,11 @@
       ref="nodeLabel" 
       v-model="node.label"
       @keydown="handleKeyDown"
+      @click="activate()"
       @blur="onEditorBlur"
       tabindex="0"
-      class="node-label"
-      :readonly="!editMode"
+      :class="(isOnCursor)?'node-label-oncursor':'node-label'"
+      :readonly="!isEditMode"
       :style="{width:contentWidth+'px'}"
       type="text">
 
@@ -36,12 +32,7 @@
         <TreeNode 
           ref="childrenComponentSecondHalf"
           v-for="(childNode,index) in node.children.slice(midIndex,nodeCount)" 
-          :node="childNode" 
-          @activePrevSibling="()=>activateChildNode(index+midIndex-1)"
-          @activeNextSibling="()=>activateChildNode(index+midIndex+1)"
-          @addPrevSibling="()=>addChildNode(index+midIndex)"
-          @addNextSibling="()=>addChildNode(index+midIndex+1)"
-          @deleteMe="()=>deleteChildNode(index+midIndex)"/>
+          :nodeId="childNode" />
       </div>
     </div>
     <div class="padding"></div>
@@ -50,24 +41,29 @@
 
 <script>
 
+import { NuxtAdapterProvider } from '~/models/NuxtAdapter.ts'
+
 export default {
   name: 'TreeNode',
   props: {
-    node: {
-      type: Object,
+    nodeId: {
+      type: String,
       required: true,
-    },
+    }
   },
   data(){
     return {
-      isActive:false,
-      editMode:false,
+      node: NuxtAdapterProvider.get().instanceStorage.getInstance(this.nodeId),
       startPoint: undefined,
-      endPoint: undefined
+      endPoint: undefined,
+      model: NuxtAdapterProvider.get()
     }
   },
   updated(){
     this.$refs.leaderLine.update();
+    if(this.isOnCursor){
+      this.$refs.nodeLabel.focus();
+    }
   },
   mounted(){
     this.$nextTick(()=>{
@@ -76,8 +72,22 @@ export default {
         this.endPoint   = this.$refs.nodeLabel;
       }
     });
+    if(this.isOnCursor){
+      this.$refs.nodeLabel.focus();
+    }
+  },
+  watch:{
+    nodeId(newValue,oldValue){
+      this.node = NuxtAdapterProvider.get().instanceStorage.getInstance(this.nodeId);
+    }
   },
   computed:{
+    isOnCursor(){
+      return this.model.cursor === this.nodeId;
+    },
+    isEditMode(){
+      return this.model.editMode && this.isOnCursor;
+    },
     contentWidth(){
       const canvas = document.createElement("canvas");
       const context = canvas.getContext('2d');
@@ -92,17 +102,18 @@ export default {
         return 0;
       }
 
-      const nodeCounts = this.node.children.map(child => {
-        function count(n){
-          if(n.children.length==0){
+      const nodeCounts = this.node.children.map(childId => {
+        function count(nodeId,model){
+          const children = model.getChildren(nodeId);
+          if(children.length==0){
             return 1;
           }else{
-            return n.children
-                  .map((c)=>count(c))
-                  .reduce((a,x)=>a+x);
+            return children
+                    .map((c)=>count(c,model))
+                    .reduce((a,x)=>a+x);
           }
         }
-        return count(child);
+        return count(childId,this.model);
       });
 
       const nodeCountSum = nodeCounts.reduce((a,x)=>a+x);
@@ -122,118 +133,42 @@ export default {
   },
   methods: {
     handleKeyDown(event) {
-      if(this.editMode){
+      if(this.model.editMode){
         if (event.key === 'Escape' || event.key === 'Enter'){
-          this.deactivateEditMode();
+          this.model.deactivateEditMode();
         }
       }else{
         if (event.key === 'h') {
-          this.activateParentNode();
+          this.model.controller.cursorMoveToParent();
         } else if (event.key === 'l') {
-          this.activateFirstChildNode();
+          this.model.controller.cursorMoveToChild();
         } else if (event.key === 'k') {
-          this.activatePreviousSiblingNode();
+          this.model.controller.cursorMoveToPrevSibling();
         } else if (event.key === 'j') {
-          this.activateNextSiblingNode();
+          this.model.controller.cursorMoveToNextSibling();
         } else if (event.key === 'i') {
-          this.activateEditMode();
+          this.model.activateEditMode();
         } else if (event.key === 'o') {
-          this.addNextSiblingNode();
+          this.model.controller.addNextSiblingNode();
         } else if (event.key === 'O') {
-          this.addPrevSiblingNode();
+          this.model.controller.addPrevSiblingNode();
         } else if (event.key === '>') {
-          this.addChildNode();
+          this.model.controller.addChildNode();
         } else if (event.key === 'd'){
-          this.deleteThisNode();
+          this.model.controller.deleteThisNode();
         } else if (event.key === 'D'){
-          this.deleteThisNodeForce();
+          this.model.controller.deleteThisNodeForce();
         }
       }
-    },
-    childrenComponent(index){
-      if(index < this.midIndex){
-        return this.$refs.childrenComponentFirstHalf[index];
-      }else{
-        return this.$refs.childrenComponentSecondHalf[index-this.midIndex];
-      }
-    },
-    deleteThisNodeForce(){
-      this.$emit("deleteMe");
-    },
-    deleteThisNode(){
-      if(this.node.children.length==0){
-        this.$emit("deleteMe");
-      }
-    },
-    deleteChildNode(index){
-      let target = this.childrenComponent(index).node;
-      this.node.removeChild(target);
-      this.$nextTick(()=>{
-        if(this.node.children.length == 0){
-          this.activate();
-        }else if(index == this.node.children.length){
-          this.childrenComponent(index-1).activate();
-        }else{
-          this.childrenComponent(index).activate();
-        }
-      });
-    },
-    addPrevSiblingNode(){
-      this.$emit("addPrevSibling");
-    },
-    addNextSiblingNode(){
-      this.$emit("addNextSibling");
-    },
-    addChildNode(newNodeIndex = this.node.children.length){
-      this.node.newChild(newNodeIndex,"new node");
-
-      this.$nextTick(()=>{
-        this.childrenComponent(newNodeIndex).activate();
-      })
     },
     onEditorBlur(){
-      this.editMode=false;
+      this.model.deactivateEditMode();
+      if(this.isOnCursor){
+        this.$refs.nodeLabel.focus();
+      }
     },
     activate(){
-      this.$refs.nodeLabel.focus();
-    },
-    activateEditMode(){
-      this.editMode=true;
-      this.$nextTick(()=>{
-        this.$refs.nodeLabel.focus();
-      });
-    },
-    deactivateEditMode(){
-      this.editMode=false;
-      this.$nextTick(()=>{
-        this.$refs.nodeLabel.focus();
-      });
-    },
-    activateChildNode(index){
-      if(index<0||this.node.children.length<=index)return;
-
-      const firstChildNode = this.childrenComponent(index);
-      if (firstChildNode && firstChildNode.activate) {
-        firstChildNode.activate();
-      }
-    },
-    activateParentNode() {
-      const parentNode = this.$parent;
-      if (parentNode && parentNode.activate) {
-        parentNode.activate();
-      }
-    },
-    activateFirstChildNode() {
-      const firstChildNode = this.childrenComponent(0);
-      if (firstChildNode && firstChildNode.activate) {
-        firstChildNode.activate();
-      }
-    },
-    activatePreviousSiblingNode() {
-      this.$emit("activePrevSibling");
-    },
-    activateNextSiblingNode() {
-      this.$emit("activeNextSibling");
+      this.model.setCursor(this.nodeId);
     }
   }
 };
@@ -258,7 +193,19 @@ export default {
   font-family: "Noto Sans", sans-serif;
 }
 
-.node-label:focus{
+.node-label-oncursor {
+  margin:0;
+  padding-top:0;
+  padding-bottom:0;
+  border: solid black 1px;
+  border-radius: 5px;
+  padding-left:5px;
+  padding-right:10px;
+  height:1.5em;
+  width:fit-content;
+  font-weight: bold;
+  font-size:16pt;
+  font-family: "Noto Sans", sans-serif;
   font-weight: bold;
   background-color: yellow;
 }
