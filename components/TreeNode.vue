@@ -151,7 +151,9 @@ export default {
         } else if (event.key === 'j') {
           this.model.controller.cursorMoveToNextSibling();
         } else if (event.key === 'i') {
-          this.model.activateEditMode();
+          setTimeout(()=>{
+            this.model.activateEditMode();
+          },1);
         } else if (event.key === 'o') {
           this.model.controller.addNextSiblingNode();
         } else if (event.key === 'O') {
