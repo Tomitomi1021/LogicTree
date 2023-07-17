@@ -79,6 +79,9 @@ export default {
   watch:{
     nodeId(newValue,oldValue){
       this.node = NuxtAdapterProvider.get().instanceStorage.getInstance(this.nodeId);
+    },
+    contentWidth(newValue,oldValue){
+      this.parentContentWidthChanged();
     }
   },
   computed:{
@@ -136,6 +139,19 @@ export default {
     }
   },
   methods: {
+    parentContentWidthChanged(){
+      this.$forceUpdate();
+      if(this.$refs.childrenComponentFirstHalf !== undefined){
+        this.$refs.childrenComponentFirstHalf.forEach((child)=>{
+          child.parentContentWidthChanged();
+        });
+      }
+      if(this.$refs.childrenComponentSecondHalf !== undefined){
+        this.$refs.childrenComponentSecondHalf.forEach((child)=>{
+          child.parentContentWidthChanged();
+        });
+      }
+    },
     handleKeyDown(event) {
       if(this.model.editMode){
         if (event.key === 'Escape' || event.key === 'Enter'){
