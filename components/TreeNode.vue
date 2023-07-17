@@ -16,6 +16,9 @@
     <input 
       ref="nodeLabel" 
       v-model="node.label"
+      @compositionstart="compositionStart"
+      @compositionend="compositionEnd"
+      @compositionupdate="compositionUpdate"
       @keydown="handleKeyDown"
       @click="activate()"
       @blur="onEditorBlur"
@@ -56,7 +59,8 @@ export default {
       node: NuxtAdapterProvider.get().instanceStorage.getInstance(this.nodeId),
       startPoint: undefined,
       endPoint: undefined,
-      model: NuxtAdapterProvider.get()
+      model: NuxtAdapterProvider.get(),
+      inputtingData: ""
     }
   },
   updated(){
@@ -96,7 +100,8 @@ export default {
       const context = canvas.getContext('2d');
       
       context.font = "bold 16pt 'Noto Sans','sans-serif'"
-      const width = context.measureText(this.node.label).width;
+      const width = context.measureText(
+                      this.node.label+this.inputtingData).width;
 
       return width;
     },
@@ -139,6 +144,15 @@ export default {
     }
   },
   methods: {
+    compositionStart(){
+      this.inputtingData = "";
+    },
+    compositionEnd(){
+      this.inputtingData = "";
+    },
+    compositionUpdate(e){
+      this.inputtingData = e.data;
+    },
     parentContentWidthChanged(){
       this.$forceUpdate();
       if(this.$refs.childrenComponentFirstHalf !== undefined){
