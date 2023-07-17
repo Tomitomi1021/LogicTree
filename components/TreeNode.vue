@@ -119,13 +119,17 @@ export default {
       const nodeCountSum = nodeCounts.reduce((a,x)=>a+x);
 
       let nodeCountCumulativeSum = 0;
-      for(let i=0;i<nodeCounts.length;i++){
+      let distances=[]
+      for(let i=0;i<=nodeCounts.length;i++){
+        const firstHalfNodeCount = nodeCountCumulativeSum;
+        const secondHalfNodeCount = nodeCountSum - nodeCountCumulativeSum;
+
+        distances.push(Math.abs(firstHalfNodeCount - secondHalfNodeCount));
+
         nodeCountCumulativeSum += nodeCounts[i];
-        if(nodeCountCumulativeSum > nodeCountSum-nodeCountCumulativeSum){
-          return i;
-        }
       }
-      return this.node.children.length;
+
+      return distances.indexOf(Math.min(...distances));
     },
     nodeCount(){
       return this.node.children.length;
