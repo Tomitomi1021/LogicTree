@@ -1,6 +1,5 @@
 <template>
   <div class="tree-node">
-    <div class="padding"></div>
     <div class="flex">
 
       <div v-if="node.parent!==null" class="lines">
@@ -31,11 +30,12 @@
         <TreeNode 
           ref="childrenComponents"
           v-for="(childNode,index) in node.children.slice(0,node.children.length)" 
-          :nodeId="childNode" />
+          :nodeId="childNode" 
+          :paddingRequired="index<(node.children.length-1)" />
       </div>
 
     </div>
-    <div class="padding"></div>
+    <div v-if="paddingRequired" class="padding"></div>
   </div>
 </template>
 
@@ -49,6 +49,10 @@ export default {
     nodeId: {
       type: String,
       required: true,
+    },
+    paddingRequired: {
+      type: Boolean,
+      required: false,
     }
   },
   data(){
@@ -169,7 +173,7 @@ export default {
 
 <style scoped>
 .padding{
-  height:0.5em;
+  height:1em;
 }
 
 .flex{
