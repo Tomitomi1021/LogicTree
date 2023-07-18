@@ -23,7 +23,7 @@
       @click="activate()"
       @blur="onEditorBlur"
       tabindex="0"
-      :class="(isOnCursor)?'node-label-oncursor':'node-label'"
+      :class="(isOnCursor)?(isEditMode)?'node-label-editing':'node-label-oncursor':'node-label'"
       :readonly="!isEditMode"
       :style="{width:contentWidth+'px'}"
       type="text">
@@ -244,6 +244,23 @@ export default {
   font-family: "Noto Sans", sans-serif;
   font-weight: bold;
   background-color: yellow;
+}
+
+.node-label-editing {
+  margin:0;
+  padding-top:0;
+  padding-bottom:0;
+  border: solid black 1px;
+  border-radius: 5px;
+  padding-left:5px;
+  padding-right:10px;
+  height:1.5em;
+  width:fit-content;
+  font-weight: bold;
+  font-size:16pt;
+  font-family: "Noto Sans", sans-serif;
+  font-weight: bold;
+  background-color: aquamarine;
 }
 
 .children {
