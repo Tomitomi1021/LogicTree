@@ -1,44 +1,41 @@
 <template>
   <div class="tree-node">
-    <div class="padding"></div>
     <div class="flex">
-      <div :style="{width:contentWidth+'px'}" ></div>
-      <div class="line"></div>
+
+      <div v-if="node.parent!==null" class="lines">
+        <LeaderLine 
+          ref="leaderLine" 
+          :start="startPoint" 
+          :end="endPoint"/> 
+      </div>
+
+      <div class="node">
+        <input 
+          ref="nodeLabel" 
+          v-model="node.label"
+          @compositionstart="compositionStart"
+          @compositionend="compositionEnd"
+          @compositionupdate="compositionUpdate"
+          @keydown="handleKeyDown"
+          @click="activate()"
+          @blur="onEditorBlur"
+          tabindex="0"
+          :class="['node-label',(isEditMode)?'node-label-editing':(isOnCursor)?'node-label-oncursor':'']"
+          :readonly="!isEditMode"
+          :style="{width:contentWidth+'px'}"
+          type="text">
+      </div>
+
       <div class="children">
         <TreeNode 
-          ref="childrenComponentFirstHalf"
-          v-for="(childNode,index) in node.children.slice(0,midIndex)" 
-          :nodeId="childNode" />
+          ref="childrenComponents"
+          v-for="(childNode,index) in node.children.slice(0,node.children.length)" 
+          :nodeId="childNode" 
+          :paddingRequired="index<(node.children.length-1)" />
       </div>
-    </div>
 
-    <LeaderLine ref="leaderLine" :start="startPoint" :end="endPoint"/> 
-    <input 
-      ref="nodeLabel" 
-      v-model="node.label"
-      @compositionstart="compositionStart"
-      @compositionend="compositionEnd"
-      @compositionupdate="compositionUpdate"
-      @keydown="handleKeyDown"
-      @click="activate()"
-      @blur="onEditorBlur"
-      tabindex="0"
-      :class="(isOnCursor)?(isEditMode)?'node-label-editing':'node-label-oncursor':'node-label'"
-      :readonly="!isEditMode"
-      :style="{width:contentWidth+'px'}"
-      type="text">
-
-    <div class="flex">
-      <div :style="{width:contentWidth+'px'}" ></div>
-      <div class="line"></div>
-      <div class="children">
-        <TreeNode 
-          ref="childrenComponentSecondHalf"
-          v-for="(childNode,index) in node.children.slice(midIndex,nodeCount)" 
-          :nodeId="childNode" />
-      </div>
     </div>
-    <div class="padding"></div>
+    <div v-if="paddingRequired" class="padding"></div>
   </div>
 </template>
 
@@ -52,6 +49,10 @@ export default {
     nodeId: {
       type: String,
       required: true,
+    },
+    paddingRequired: {
+      type: Boolean,
+      required: false,
     }
   },
   data(){
@@ -64,7 +65,9 @@ export default {
     }
   },
   updated(){
-    this.$refs.leaderLine.update();
+    if(this.$refs.leaderLine!==undefined){
+      this.$refs.leaderLine.update();
+    }
     if(this.isOnCursor){
       this.$refs.nodeLabel.focus();
     }
@@ -105,43 +108,6 @@ export default {
 
       return width;
     },
-    midIndex(){
-      if(this.node.children.length==0){
-        return 0;
-      }
-
-      const nodeCounts = this.node.children.map(childId => {
-        function count(nodeId,model){
-          const children = model.getChildren(nodeId);
-          if(children.length==0){
-            return 1;
-          }else{
-            return children
-                    .map((c)=>count(c,model))
-                    .reduce((a,x)=>a+x);
-          }
-        }
-        return count(childId,this.model);
-      });
-
-      const nodeCountSum = nodeCounts.reduce((a,x)=>a+x);
-
-      let nodeCountCumulativeSum = 0;
-      let distances=[]
-      for(let i=0;i<=nodeCounts.length;i++){
-        const firstHalfNodeCount = nodeCountCumulativeSum;
-        const secondHalfNodeCount = nodeCountSum - nodeCountCumulativeSum;
-
-        distances.push(Math.abs(firstHalfNodeCount - secondHalfNodeCount));
-
-        nodeCountCumulativeSum += nodeCounts[i];
-      }
-
-      return distances.indexOf(Math.min(...distances));
-    },
-    nodeCount(){
-      return this.node.children.length;
-    }
   },
   methods: {
     compositionStart(){
@@ -155,13 +121,8 @@ export default {
     },
     parentContentWidthChanged(){
       this.$forceUpdate();
-      if(this.$refs.childrenComponentFirstHalf !== undefined){
-        this.$refs.childrenComponentFirstHalf.forEach((child)=>{
-          child.parentContentWidthChanged();
-        });
-      }
-      if(this.$refs.childrenComponentSecondHalf !== undefined){
-        this.$refs.childrenComponentSecondHalf.forEach((child)=>{
+      if(this.$refs.childrenComponents!== undefined){
+        this.$refs.childrenComponents.forEach((child)=>{
           child.parentContentWidthChanged();
         });
       }
@@ -211,71 +172,51 @@ export default {
 </script>
 
 <style scoped>
-.tree-node {
+.padding{
+  height:1em;
+}
+
+.flex{
+  display:flex;
+  align-items:center;
+}
+
+.lines{
+  width:40px;
+  height:auto;
+  margin:0;
+  padding:0;
+}
+
+.node {
+}
+
+.children {
 }
 
 .node-label {
-  margin:0;
   padding-top:0;
   padding-bottom:0;
-  border: solid black 1px;
-  border-radius: 5px;
   padding-left:5px;
   padding-right:10px;
+
+  border: solid black 1px;
+  border-radius: 5px;
+
   height:1.5em;
-  width:fit-content;
+
   font-weight: bold;
   font-size:16pt;
   font-family: "Noto Sans", sans-serif;
 }
 
 .node-label-oncursor {
-  margin:0;
-  padding-top:0;
-  padding-bottom:0;
-  border: solid black 1px;
-  border-radius: 5px;
-  padding-left:5px;
-  padding-right:10px;
-  height:1.5em;
-  width:fit-content;
-  font-weight: bold;
-  font-size:16pt;
-  font-family: "Noto Sans", sans-serif;
-  font-weight: bold;
   background-color: yellow;
 }
 
 .node-label-editing {
-  margin:0;
-  padding-top:0;
-  padding-bottom:0;
-  border: solid black 1px;
-  border-radius: 5px;
-  padding-left:5px;
-  padding-right:10px;
-  height:1.5em;
-  width:fit-content;
-  font-weight: bold;
-  font-size:16pt;
-  font-family: "Noto Sans", sans-serif;
-  font-weight: bold;
   background-color: aquamarine;
 }
 
-.children {
-}
-
-.padding{
-  height:5px;
-}
-
-.flex{
-  display:flex;
-}
-
-.line{
-  width:3em;
-}
 </style>
 
