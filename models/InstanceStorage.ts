@@ -2,9 +2,10 @@ import { Node,ID } from '~/models/Node.ts'
 import { IInstanceAccessor,NodeParams } from '~/models/NodeModel.ts';
 import { v4 as uuidv4 } from 'uuid';
 
-export class InstanceStorage implements IInstanceAccessor{
-  private _storage : { [id: ID]: Node } = {};
+type Storage = { [id: ID]: Node };
 
+export class InstanceStorage implements IInstanceAccessor{
+  private _storage : Storage = {};
   new(params: NodeParams): ID{
     const id = uuidv4();
 
@@ -57,5 +58,13 @@ export class InstanceStorage implements IInstanceAccessor{
     }else{
       throw Error(`No such node (ID=${id})`);
     }
+  }
+
+  getStorage(): Storage {
+    return {...this._storage};
+  }
+
+  setStorage(storage: Storage){
+    this._storage = {...storage};
   }
 };
