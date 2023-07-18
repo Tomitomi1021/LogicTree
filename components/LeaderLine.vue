@@ -96,18 +96,11 @@ export default {
       const topY    = (sy+sh/2 < ey+eh/2)? sy+sh/2 : ey+eh/2;
       const bottomY = (sy+sh/2 > ey+eh/2)? sy+sh/2 : ey+eh/2;
 
-      //高さが全く同じ場合は考えないものとする．
-      if(topY==bottomY){
-        return {
-          isValid: false
-        };
-      }else{
-        return {
-          isValid: true,
-          topY: topY,
-          bottomY: bottomY
-        };
-      }
+      return {
+        isValid: true,
+        topY: topY,
+        bottomY: bottomY
+      };
     },
 
 
