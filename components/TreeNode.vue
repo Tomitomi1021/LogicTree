@@ -73,6 +73,10 @@ export default {
     }
   },
   mounted(){
+    //サーバサイドではcontentWidthが計算できないので0になっている．
+    //そのため，mountedのタイミングでcontentWidthを強制的に再計算させる．
+    this.$forceUpdate()
+
     this.$nextTick(()=>{
       if(this.$parent.$refs.nodeLabel!==undefined){
         this.startPoint = this.$parent.$refs.nodeLabel;
@@ -99,14 +103,18 @@ export default {
       return this.model.editMode && this.isOnCursor;
     },
     contentWidth(){
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext('2d');
-      
-      context.font = "bold 16pt 'Noto Sans','sans-serif'"
-      const width = context.measureText(
-                      this.node.label+this.inputtingData).width;
+      if(process.client){
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext('2d');
+        
+        context.font = "bold 16pt 'Noto Sans','sans-serif'"
+        const width = context.measureText(
+                        this.node.label+this.inputtingData).width;
 
-      return width;
+        return width;
+      }else{
+        return 0;
+      }
     },
   },
   methods: {
