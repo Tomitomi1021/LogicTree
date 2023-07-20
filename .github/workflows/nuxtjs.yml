@@ -6,8 +6,11 @@ name: Deploy Nuxt site to Pages
 
 on:
   # Runs on release versions
-  tags:
-    - 'v*'
+  push:
+    branches-ignore:
+      - '**'
+    tags:
+      - 'v*'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
