@@ -33,9 +33,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set BASE_URL
-        env:
-          BASE_URL: {{ env.BASE_URL }}
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -77,6 +74,8 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Static HTML export with Nuxt
         run: ${{ steps.detect-package-manager.outputs.manager }} run generate
+        env:
+          BASE_URL: {{ env.BASE_URL }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
