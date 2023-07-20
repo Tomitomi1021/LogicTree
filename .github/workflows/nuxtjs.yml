@@ -64,10 +64,6 @@ jobs:
             ${{ runner.os }}-nuxt-build-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
-      - name: Environment DUMP
-        run: echo ${{ vars.BASE_URL }}
-      - name: nuxt.config.ts DUMP
-        run: cat nuxt.config.ts
       - name: Static HTML export with Nuxt
         run: ${{ steps.detect-package-manager.outputs.manager }} run generate
         env:
