@@ -139,6 +139,8 @@ export default {
       if(this.model.editMode){
         if (event.key === 'Escape' || event.key === 'Enter'){
           this.model.deactivateEditMode();
+        }else if(event.ctrlKey === true && event.key === '['){
+          this.model.deactivateEditMode();
         }
       }else{
         if (event.key === 'h') {
